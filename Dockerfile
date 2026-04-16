@@ -20,15 +20,23 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-# Stage 2: Serve with nginx
-FROM nginx:alpine AS runner
+# Stage 2: Production Node.js runner
+FROM node:20-alpine AS runner
 
-# SPA-friendly nginx config
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+WORKDIR /app
 
-# Copy built assets
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Copy built frontend assets
+COPY --from=builder /app/dist ./dist/
+
+# Copy Express backend
+COPY --from=builder /app/server ./server/
+
+# Install only production dependencies
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/package-lock.json* ./
+RUN npm ci --omit=dev
 
 EXPOSE 80
+ENV PORT=80
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["node", "server/index.js"]
