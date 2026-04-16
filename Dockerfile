@@ -1,13 +1,24 @@
 # Stage 1: Build
-FROM oven/bun:1-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY package.json bun.lockb ./
-RUN bun install
+# Build-time env vars (baked into the static bundle by Vite)
+ARG VITE_ENTRA_CLIENT_ID
+ARG VITE_ENTRA_TENANT_ID
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_PUBLISHABLE_KEY
+
+ENV VITE_ENTRA_CLIENT_ID=$VITE_ENTRA_CLIENT_ID
+ENV VITE_ENTRA_TENANT_ID=$VITE_ENTRA_TENANT_ID
+ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+ENV VITE_SUPABASE_PUBLISHABLE_KEY=$VITE_SUPABASE_PUBLISHABLE_KEY
+
+COPY package.json package-lock.json* ./
+RUN npm ci
 
 COPY . .
-RUN bun run build
+RUN npm run build
 
 # Stage 2: Serve with nginx
 FROM nginx:alpine AS runner

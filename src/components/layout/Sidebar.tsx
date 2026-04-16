@@ -1,7 +1,15 @@
 import { useState } from 'react';
-import { Plus, MessageSquare, Trash2, ChevronLeft, Plug, Settings } from 'lucide-react';
+import { Plus, MessageSquare, Trash2, ChevronLeft, Plug, Settings, LogOut } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useMsal } from '@azure/msal-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export function Sidebar() {
   const {
@@ -16,6 +24,16 @@ export function Sidebar() {
     setActiveServer,
     setConnectionPanelOpen,
   } = useAppStore();
+
+  const { instance, accounts } = useMsal();
+  const account = accounts[0];
+  const userInitials = account?.name
+    ? account.name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
+    : '?';
+
+  const handleSignOut = () => {
+    instance.logoutRedirect({ postLogoutRedirectUri: window.location.origin });
+  };
 
   const connectedServers = servers.filter((s) => s.status === 'connected');
 
@@ -32,12 +50,32 @@ export function Sidebar() {
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-4 border-b border-sidebar-border">
             <h1 className="text-sm font-semibold text-sidebar-foreground">MCP Chat</h1>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="p-1.5 rounded-md hover:bg-sidebar-accent text-sidebar-foreground transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center hover:opacity-80 transition-opacity">
+                    {userInitials}
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <div className="px-2 py-1.5">
+                    <p className="text-sm font-medium truncate">{account?.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{account?.username}</p>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive gap-2">
+                    <LogOut className="w-4 h-4" />
+                    Sign out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="p-1.5 rounded-md hover:bg-sidebar-accent text-sidebar-foreground transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           {/* Server selector */}

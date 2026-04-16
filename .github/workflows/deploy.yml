@@ -34,7 +34,12 @@ jobs:
       - name: Build and push Docker image
         run: |
           IMAGE_TAG=${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          docker build -t "$IMAGE_TAG" .
+          docker build \
+            --build-arg VITE_ENTRA_CLIENT_ID=${{ secrets.VITE_ENTRA_CLIENT_ID }} \
+            --build-arg VITE_ENTRA_TENANT_ID=${{ secrets.VITE_ENTRA_TENANT_ID }} \
+            --build-arg VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }} \
+            --build-arg VITE_SUPABASE_PUBLISHABLE_KEY=${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }} \
+            -t "$IMAGE_TAG" .
           docker push "$IMAGE_TAG"
           echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
 
