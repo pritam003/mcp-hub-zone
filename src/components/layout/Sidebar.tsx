@@ -79,27 +79,42 @@ export function Sidebar() {
           </div>
 
           {/* Server selector */}
-          <div className="px-3 py-3 border-b border-sidebar-border">
+          <div className="px-3 py-3 border-b border-sidebar-border space-y-1.5">
+            {/* Per-server rows */}
+            {servers.map((sv) => (
+              <div key={sv.id} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-sidebar-accent text-sidebar-accent-foreground text-sm">
+                <div className={`w-2 h-2 rounded-full shrink-0 ${
+                  sv.status === 'connected' ? 'bg-green-400' :
+                  sv.status === 'connecting' ? 'bg-yellow-400 animate-pulse' :
+                  sv.status === 'error' ? 'bg-red-400' : 'bg-muted-foreground'
+                }`} />
+                <span className="flex-1 truncate">{sv.name}</span>
+                <button
+                  onClick={() => createConversation(sv.id)}
+                  className="shrink-0 p-1 rounded hover:bg-sidebar-border transition-colors"
+                  title="New chat"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+            {/* Add server button */}
             <button
               onClick={() => setConnectionPanelOpen(true)}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-sidebar-accent text-sidebar-accent-foreground text-sm hover:opacity-80 transition-opacity"
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-sidebar-border text-sidebar-foreground/60 text-sm hover:bg-sidebar-accent transition-colors"
             >
               <Plug className="w-4 h-4" />
-              <span className="flex-1 text-left truncate">
-                {connectedServers.length > 0
-                  ? `${connectedServers.length} server${connectedServers.length > 1 ? 's' : ''}`
-                  : 'Connect server'}
-              </span>
-              <Settings className="w-3.5 h-3.5 text-muted-foreground" />
+              <span className="flex-1 text-left">Add server</span>
+              <Settings className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          {/* New chat */}
-          {connectedServers.length > 0 && (
+          {/* New chat — shown when at least one server exists */}
+          {servers.length > 0 && (
             <div className="px-3 py-2">
               <button
                 onClick={() => {
-                  const sid = activeServerId || connectedServers[0]?.id;
+                  const sid = activeServerId || connectedServers[0]?.id || servers[0]?.id;
                   if (sid) createConversation(sid);
                 }}
                 className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-sidebar-border text-sidebar-foreground text-sm hover:bg-sidebar-accent transition-colors"

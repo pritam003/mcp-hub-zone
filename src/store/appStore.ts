@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { MCPServer, ChatMessage, Conversation } from '@/types/mcp';
 
 interface AppState {
@@ -28,7 +29,9 @@ interface AppState {
 let counter = 0;
 const uid = () => `${Date.now()}-${++counter}`;
 
-export const useAppStore = create<AppState>((set, get) => ({
+export const useAppStore = create<AppState>()(
+  persist(
+    (set, get) => ({
   servers: [],
   activeServerId: null,
   conversations: [],
@@ -107,4 +110,15 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
   setConnectionPanelOpen: (open) => set({ connectionPanelOpen: open }),
-}));
+}),
+    {
+      name: 'mcp-hub-store',
+      // Only persist servers and conversations; reset UI state
+      partialize: (s) => ({
+        servers: s.servers.map((sv) => ({ ...sv, status: 'disconnected' as const, tools: [] })),
+        conversations: s.conversations,
+        activeConversationId: s.activeConversationId,
+      }),
+    }
+  )
+);
